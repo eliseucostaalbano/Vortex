@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'jsm/controls/OrbitControls.js';
+import { EffectComposer } from "jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "jsm/postprocessing/UnrealBloomPass.js";
 import spline from './spline.js';
 
 const w = window.innerWidth;
@@ -20,6 +23,15 @@ const controles = new OrbitControls(camera, renderer.domElement);
 controles.enableDamping = true;
 controles.dampingFactor = 0.03;
 
+const renderScene = new RenderPass(cena, camera);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 1.5, 0.4, 100);
+bloomPass.threshold = 0.002;
+bloomPass.strength = 3.5;
+bloomPass.radius = 0;
+const composer = new EffectComposer(renderer);
+composer.addPass(renderScene);
+composer.addPass(bloomPass);
+
 // crie uma geometria de linhas usando o spline
 const pontos = spline.getPoints(100);
 const geometria = new THREE.BufferGeometry().setFromPoints(pontos);
@@ -29,22 +41,15 @@ const linha = new THREE.Line(geometria, material);
 
 //criando a geometria do tubo do spline
 const tuboGeo = new THREE.TubeGeometry(spline, 222, 0.65, 16, true);
-const tuboMat = new THREE.MeshBasicMaterial({ 
-     color: 0x0000ff, 
-    // side: THREE.DoubleSide,
-    wireframe: true 
-  });
-const tubo = new THREE.Mesh(tuboGeo, tuboMat);
-// cena.add(tubo);
 
 //criando as bordas do tubo
 const pontas = new THREE.EdgesGeometry(tuboGeo, 0.2);
-const pontosMat = new THREE.LineBasicMaterial({ color: 0xC0C0C0 });
+const pontosMat = new THREE.LineBasicMaterial({ color: 0x0000ff });
 const tuboLinhas = new THREE.LineSegments(pontas, pontosMat);
 cena.add(tuboLinhas);
 
-const numCaixas =  55
-const tamanho = 0.075
+const numCaixas = 100;
+const tamanho = 0.075;
 const caixaGeo = new THREE.BoxGeometry(tamanho, tamanho, tamanho);
 for (let i = 0; i < numCaixas; i++) {
 const caixaMat = new THREE.MeshBasicMaterial({ color: 0x0000ff ,  wireframe: true }); 
@@ -61,8 +66,8 @@ const caixa = new THREE.Mesh(caixaGeo, caixaMat);
   ); 
   caixa.rotation.set(rota.x, rota.y, rota.z);
   const linhaGeo = new THREE.EdgesGeometry(caixaGeo, 0.2);
-  // const color = new THREE.Color().setHSL(0.7 - p, 1, 0.5);
-  const lineMat = new THREE.LineBasicMaterial({ color:0xffff00 });
+  const cor = new THREE.Color().setHSL(Math.random(), Math.random(), Math.random());
+  const lineMat = new THREE.LineBasicMaterial({ color: cor });
   const caixaLinhas = new THREE.LineSegments(linhaGeo, lineMat);
   caixaLinhas.position.copy(pos);
   caixaLinhas.rotation.set(rota.x, rota.y, rota.z);
@@ -72,7 +77,7 @@ const caixa = new THREE.Mesh(caixaGeo, caixaMat);
 
 const updateCamera = (t) => {
   const tempo = t * 0.1;
-  const tempoLoop = 10 * 1000;
+  const tempoLoop = 5 * 1000;
   const p = (tempo % tempoLoop) / tempoLoop;
   const pos = tuboGeo.parameters.path.getPointAt(p);
   const olharPara = tuboGeo.parameters.path.getPointAt((p + 0.03) % 1);
@@ -83,7 +88,7 @@ const updateCamera = (t) => {
 function animate(t) {
   requestAnimationFrame(animate);
   updateCamera(t);
-  renderer.render(cena, camera);
+  composer.render(cena, camera);
   controles.update();
 }
 animate();
