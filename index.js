@@ -43,6 +43,33 @@ const pontosMat = new THREE.LineBasicMaterial({ color: 0xC0C0C0 });
 const tuboLinhas = new THREE.LineSegments(pontas, pontosMat);
 cena.add(tuboLinhas);
 
+const numCaixas =  55
+const tamanho = 0.075
+const caixaGeo = new THREE.BoxGeometry(tamanho, tamanho, tamanho);
+for (let i = 0; i < numCaixas; i++) {
+const caixaMat = new THREE.MeshBasicMaterial({ color: 0x0000ff ,  wireframe: true }); 
+const caixa = new THREE.Mesh(caixaGeo, caixaMat);
+  const p = (i / numCaixas + Math.random() * 0.1) % 1;
+  const pos = tuboGeo.parameters.path.getPointAt(p);
+  pos.x += Math.random() - 0.4;
+  pos.z += Math.random() - 0.4;
+  caixa.position.copy(pos);
+  const rota = new THREE.Vector3(
+    Math.random() * Math.PI,
+    Math.random() * Math.PI,
+    Math.random() * Math.PI
+  ); 
+  caixa.rotation.set(rota.x, rota.y, rota.z);
+  const linhaGeo = new THREE.EdgesGeometry(caixaGeo, 0.2);
+  // const color = new THREE.Color().setHSL(0.7 - p, 1, 0.5);
+  const lineMat = new THREE.LineBasicMaterial({ color:0xffff00 });
+  const caixaLinhas = new THREE.LineSegments(linhaGeo, lineMat);
+  caixaLinhas.position.copy(pos);
+  caixaLinhas.rotation.set(rota.x, rota.y, rota.z);
+  // cena.add(caixa);
+  cena.add(caixaLinhas);
+}
+
 const updateCamera = (t) => {
   const tempo = t * 0.1;
   const tempoLoop = 10 * 1000;
